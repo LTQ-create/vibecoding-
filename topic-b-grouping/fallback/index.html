@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>随机分组</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+    padding: 24px;
+  }
+  h1 { text-align: center; margin-bottom: 24px; }
+  .layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; max-width: 1100px; margin: 0 auto; }
+  @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+  .panel { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  label { display: block; font-weight: 600; margin-bottom: 8px; }
+  textarea { width: 100%; height: 280px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; resize: vertical; }
+  input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; margin-bottom: 16px; }
+  button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #2563eb; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+  button:hover { background: #1d4ed8; }
+  .count { color: #64748b; font-size: 14px; margin: 8px 0 16px; }
+  .groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+  .group { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .group h2 { font-size: 18px; color: #2563eb; margin-bottom: 10px; }
+  .group li { list-style: none; padding: 4px 0; border-bottom: 1px dashed #e2e8f0; }
+  .empty { color: #94a3b8; text-align: center; padding: 60px 0; }
+</style>
+</head>
+<body>
+  <h1>随机分组工具</h1>
+  <div class="layout">
+    <section class="panel">
+      <label for="names">名单（每行一个）</label>
+      <textarea id="names" placeholder="张三&#10;李四&#10;王五"></textarea>
+      <p class="count" id="count">共 0 人</p>
+      <label for="groupCount">分几组</label>
+      <input id="groupCount" type="number" min="1" value="4">
+      <button id="go">开始分组</button>
+    </section>
+    <section id="result" class="groups">
+      <p class="empty">粘贴名单后点击“开始分组”</p>
+    </section>
+  </div>
+<script>
+  const namesEl = document.getElementById('names');
+  const countEl = document.getElementById('count');
+  const groupCountEl = document.getElementById('groupCount');
+  const resultEl = document.getElementById('result');
+
+  const getNames = () => namesEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  function shuffle(list) {
+    const a = [...list];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  namesEl.addEventListener('input', () => { countEl.textContent = `共 ${getNames().length} 人`; });
+
+  document.getElementById('go').addEventListener('click', () => {
+    const names = shuffle(getNames());
+    const n = Math.max(1, parseInt(groupCountEl.value, 10) || 1);
+    if (!names.length) { alert('请先输入名单'); return; }
+    const groups = Array.from({ length: n }, () => []);
+    names.forEach((name, i) => groups[i % n].push(name));
+    resultEl.innerHTML = '';
+    groups.forEach((members, i) => {
+      const card = document.createElement('div');
+      card.className = 'group';
+      const title = document.createElement('h2');
+      title.textContent = `第 ${i + 1} 组（${members.length} 人）`;
+      const ul = document.createElement('ul');
+      members.forEach(m => { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); });
+      card.append(title, ul);
+      resultEl.appendChild(card);
+    });
+  });
+</script>
+</body>
+</html>

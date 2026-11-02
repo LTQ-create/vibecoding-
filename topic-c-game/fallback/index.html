@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贪吃蛇</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #111827;
+    color: #f9fafb;
+  }
+  .score { font-size: 22px; }
+  .stage { position: relative; }
+  canvas { display: block; background: #1f2937; border-radius: 8px; }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 8px;
+  }
+  .overlay.show { display: flex; }
+  .overlay h2 { font-size: 32px; }
+  button { padding: 10px 24px; border: none; border-radius: 8px; background: #22c55e; color: #052e16; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .hint { color: #9ca3af; font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="score">得分：<span id="score">0</span></div>
+  <div class="stage">
+    <canvas id="game" width="400" height="400"></canvas>
+    <div class="overlay" id="overlay">
+      <h2>Game Over</h2>
+      <button id="restart">重新开始</button>
+    </div>
+  </div>
+  <p class="hint">方向键控制移动</p>
+<script>
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const overlay = document.getElementById('overlay');
+  const SIZE = 20;
+  const CELLS = canvas.width / SIZE;
+  const DIRS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+
+  let snake, dir, nextDir, food, score, timer;
+
+  function randomFood() {
+    let p;
+    do { p = { x: Math.floor(Math.random() * CELLS), y: Math.floor(Math.random() * CELLS) }; }
+    while (snake.some(s => s.x === p.x && s.y === p.y));
+    return p;
+  }
+
+  function reset() {
+    snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
+    dir = nextDir = [1, 0];
+    food = randomFood();
+    score = 0;
+    scoreEl.textContent = score;
+    overlay.classList.remove('show');
+    clearInterval(timer);
+    timer = setInterval(step, 120);
+    draw();
+  }
+
+  function step() {
+    dir = nextDir;
+    const head = { x: snake[0].x + dir[0], y: snake[0].y + dir[1] };
+    const hitWall = head.x < 0 || head.y < 0 || head.x >= CELLS || head.y >= CELLS;
+    const hitSelf = snake.some(s => s.x === head.x && s.y === head.y);
+    if (hitWall || hitSelf) {
+      clearInterval(timer);
+      overlay.classList.add('show');
+      return;
+    }
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+      scoreEl.textContent = ++score;
+      food = randomFood();
+    } else {
+      snake.pop();
+    }
+    draw();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(food.x * SIZE + 2, food.y * SIZE + 2, SIZE - 4, SIZE - 4);
+    snake.forEach((s, i) => {
+      ctx.fillStyle = i === 0 ? '#4ade80' : '#22c55e';
+      ctx.fillRect(s.x * SIZE + 1, s.y * SIZE + 1, SIZE - 2, SIZE - 2);
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    const d = DIRS[e.key];
+    if (!d) return;
+    e.preventDefault();
+    if (d[0] !== -dir[0] || d[1] !== -dir[1]) nextDir = d;
+  });
+
+  document.getElementById('restart').addEventListener('click', reset);
+  reset();
+</script>
+</body>
+</html>
